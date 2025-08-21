@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(215, 28%, 12%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(215, 25%, 18%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(215, 28%, 12%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(211, 100%, 65%);
+  --primary-foreground: hsl(215, 28%, 12%);
+  --secondary: hsl(214, 32%, 91%);
+  --secondary-foreground: hsl(215, 28%, 12%);
+  --muted: hsl(215, 25%, 25%);
+  --muted-foreground: hsl(215, 20%, 75%);
+  --accent: hsl(215, 25%, 25%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 84%, 65%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(215, 20%, 35%);
+  --input: hsl(215, 25%, 22%);
+  --ring: hsl(211, 100%, 65%);
+  --chart-1: hsl(211, 100%, 65%);
+  --chart-2: hsl(142, 76%, 45%);
+  --chart-3: hsl(47, 96%, 60%);
+  --chart-4: hsl(280, 65%, 70%);
+  --chart-5: hsl(340, 75%, 65%);
+  --sidebar: hsl(215, 25%, 16%);
+  --sidebar-foreground: hsl(210, 40%, 98%);
+  --sidebar-primary: hsl(211, 100%, 65%);
+  --sidebar-primary-foreground: hsl(215, 28%, 12%);
+  --sidebar-accent: hsl(215, 25%, 25%);
+  --sidebar-accent-foreground: hsl(210, 40%, 98%);
+  --sidebar-border: hsl(215, 20%, 35%);
+  --sidebar-ring: hsl(211, 100%, 65%);
+  
+  /* Trading specific colors */
+  --trading-dark: hsl(215, 28%, 12%);
+  --trading-darker: hsl(215, 28%, 8%);
+  --trading-slate: hsl(215, 25%, 16%);
+  --trading-profit: hsl(142, 76%, 45%);
+  --trading-loss: hsl(0, 84%, 65%);
+  --trading-neutral: hsl(215, 20%, 75%);
+  --trading-accent: hsl(190, 85%, 55%);
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(215, 28%, 12%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(215, 25%, 18%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(215, 28%, 12%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(211, 100%, 65%);
+  --primary-foreground: hsl(215, 28%, 12%);
+  --secondary: hsl(214, 32%, 91%);
+  --secondary-foreground: hsl(215, 28%, 12%);
+  --muted: hsl(215, 25%, 25%);
+  --muted-foreground: hsl(215, 20%, 75%);
+  --accent: hsl(215, 25%, 25%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 84%, 65%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --border: hsl(215, 20%, 35%);
+  --input: hsl(215, 25%, 22%);
+  --ring: hsl(211, 100%, 65%);
+  --chart-1: hsl(211, 100%, 65%);
+  --chart-2: hsl(142, 76%, 45%);
+  --chart-3: hsl(47, 96%, 60%);
+  --chart-4: hsl(280, 65%, 70%);
+  --chart-5: hsl(340, 75%, 65%);
+  --sidebar: hsl(215, 25%, 16%);
+  --sidebar-foreground: hsl(210, 40%, 98%);
+  --sidebar-primary: hsl(211, 100%, 65%);
+  --sidebar-primary-foreground: hsl(215, 28%, 12%);
+  --sidebar-accent: hsl(215, 25%, 25%);
+  --sidebar-accent-foreground: hsl(210, 40%, 98%);
+  --sidebar-border: hsl(215, 20%, 35%);
+  --sidebar-ring: hsl(211, 100%, 65%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer components {
+  .trading-card {
+    background: linear-gradient(135deg, hsl(215, 25%, 18%) 0%, hsl(215, 25%, 22%) 100%);
+    border: 1px solid hsl(215, 20%, 35%);
+    box-shadow: 0 4px 6px -1px hsla(215, 28%, 8%, 0.3), 0 2px 4px -1px hsla(215, 28%, 8%, 0.06);
+  }
+
+  .profit-glow {
+    box-shadow: 0 0 25px hsla(142, 76%, 45%, 0.3), 0 0 40px hsla(142, 76%, 45%, 0.1);
+  }
+
+  .loss-glow {
+    box-shadow: 0 0 25px hsla(0, 84%, 65%, 0.3), 0 0 40px hsla(0, 84%, 65%, 0.1);
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 25px hsla(190, 85%, 55%, 0.3), 0 0 40px hsla(190, 85%, 55%, 0.1);
+  }
+
+  .glass-effect {
+    background: hsla(215, 25%, 18%, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsla(215, 20%, 75%, 0.15);
+  }
+
+  .ticker-scroll {
+    animation: scroll 30s linear infinite;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, hsl(215, 25%, 18%) 0%, hsl(215, 25%, 22%) 100%);
+    border-radius: 0.75rem;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(211, 100%, 65%), hsl(190, 85%, 55%));
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+  }
+
+  @keyframes scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .animate-pulse-green {
+    animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-pulse-red {
+    animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-pulse-blue {
+    animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% {
+      opacity: 1;
+      color: hsl(142, 76%, 45%);
+    }
+    50% {
+      opacity: 0.7;
+      color: hsl(142, 76%, 60%);
+    }
+  }
+
+  @keyframes pulse-red {
+    0%, 100% {
+      opacity: 1;
+      color: hsl(0, 84%, 65%);
+    }
+    50% {
+      opacity: 0.7;
+      color: hsl(0, 84%, 80%);
+    }
+  }
+
+  @keyframes pulse-blue {
+    0%, 100% {
+      opacity: 1;
+      color: hsl(211, 100%, 65%);
+    }
+    50% {
+      opacity: 0.7;
+      color: hsl(211, 100%, 80%);
+    }
+  }
+}

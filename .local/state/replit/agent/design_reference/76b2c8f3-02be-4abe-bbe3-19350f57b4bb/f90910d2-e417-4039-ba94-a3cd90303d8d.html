@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoTrade Pro - Intelligent Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        'trading': {
+                            'dark': '#0F172A',
+                            'darker': '#020617',
+                            'slate': '#1E293B',
+                            'profit': '#22C55E',
+                            'loss': '#EF4444',
+                            'neutral': '#64748B'
+                        }
+                    },
+                    animation: {
+                        'pulse-green': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'pulse-red': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .trading-card {
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+            border: 1px solid #334155;
+        }
+
+        .profit-glow {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .loss-glow {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .ticker-scroll {
+            animation: scroll 30s linear infinite;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-trading-dark text-gray-100 min-h-screen">
+    <!-- @COMPONENT: Header [navigation, user info, account balance] -->
+    <header class="bg-trading-slate border-b border-gray-700 sticky top-0 z-50">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-white">AlgoTrade Pro</h1>
+                </div>
+                
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#" class="text-blue-400 hover:text-blue-300 font-medium">Dashboard</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Strategies</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Backtest</a>
+                    <a href="#" class="text-gray-400 hover:text-white">Analytics</a>
+                </nav>
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <!-- @STATE: connectionStatus:string = 'connected' -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-400">Live Market</span>
+                </div>
+
+                <div class="text-right">
+                    <div class="text-sm text-gray-400">Account Balance</div>
+                    <div class="font-mono font-semibold text-green-400" data-bind="accountBalance">$125,430.20</div>
+                </div>
+
+                <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Ticker Scroll -->
+        <div class="bg-trading-darker border-t border-gray-800 py-2 overflow-hidden">
+            <div class="ticker-scroll flex space-x-8 whitespace-nowrap">
+                <!-- @MAP: marketTickers.map(ticker => ( -->
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">AAPL</span>
+                    <span class="font-mono text-sm text-green-400">$175.24</span>
+                    <span class="font-mono text-xs text-green-400">+2.34%</span>
+                </div>
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">GOOGL</span>
+                    <span class="font-mono text-sm text-red-400">$2,845.67</span>
+                    <span class="font-mono text-xs text-red-400">-1.23%</span>
+                </div>
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">MSFT</span>
+                    <span class="font-mono text-sm text-green-400">$378.92</span>
+                    <span class="font-mono text-xs text-green-400">+0.87%</span>
+                </div>
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">TSLA</span>
+                    <span class="font-mono text-sm text-red-400">$234.56</span>
+                    <span class="font-mono text-xs text-red-400">-3.45%</span>
+                </div>
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">AMZN</span>
+                    <span class="font-mono text-sm text-green-400">$3,234.78</span>
+                    <span class="font-mono text-xs text-green-400">+1.67%</span>
+                </div>
+                <div class="flex items-center space-x-2" data-mock="true">
+                    <span class="font-mono text-sm">BTC</span>
+                    <span class="font-mono text-sm text-green-400">$43,567.89</span>
+                    <span class="font-mono text-xs text-green-400">+4.23%</span>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <div class="flex min-h-screen">
+        <!-- @COMPONENT: Sidebar [watchlist, active strategies, quick stats] -->
+        <aside class="w-80 bg-trading-slate border-r border-gray-700 overflow-y-auto">
+            <!-- Portfolio Overview -->
+            <div class="p-6 border-b border-gray-700">
+                <h2 class="text-lg font-semibold text-white mb-4">Portfolio Overview</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="trading-card p-4 rounded-lg">
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Total P&L</div>
+                        <div class="font-mono text-lg font-semibold text-green-400" data-bind="totalPL">+$8,945.30</div>
+                        <div class="text-xs text-green-400" data-bind="totalPLPercent">+7.13%</div>
+                    </div>
+                    
+                    <div class="trading-card p-4 rounded-lg">
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Today's P&L</div>
+                        <div class="font-mono text-lg font-semibold text-red-400" data-bind="todayPL">-$234.56</div>
+                        <div class="text-xs text-red-400" data-bind="todayPLPercent">-0.19%</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Active Positions</span>
+                        <span class="font-mono text-white" data-bind="activePositions">7</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Open Orders</span>
+                        <span class="font-mono text-white" data-bind="openOrders">3</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Win Rate</span>
+                        <span class="font-mono text-green-400" data-bind="winRate">68.5%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Strategies -->
+            <div class="p-6 border-b border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Active Strategies</h3>
+                    <button class="text-blue-400 hover:text-blue-300 text-sm">
+                        <i class="fas fa-plus mr-1"></i>Add
+                    </button>
+                </div>
+
+                <!-- @MAP: activeStrategies.map(strategy => ( -->
+                <div class="space-y-3">
+                    <div class="trading-card p-3 rounded-lg" data-mock="true">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-white">Trend Following</span>
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-1">AAPL, GOOGL, MSFT</div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">P&L:</span>
+                            <span class="font-mono text-green-400">+$1,234.56</span>
+                        </div>
+                    </div>
+
+                    <div class="trading-card p-3 rounded-lg" data-mock="true">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-white">Mean Reversion</span>
+                            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-1">SPY, QQQ</div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">P&L:</span>
+                            <span class="font-mono text-red-400">-$89.45</span>
+                        </div>
+                    </div>
+
+                    <div class="trading-card p-3 rounded-lg" data-mock="true">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-white">Arbitrage</span>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-1">BTC/USD</div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400">P&L:</span>
+                            <span class="font-mono text-green-400">+$567.89</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+
+            <!-- Watchlist -->
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Watchlist</h3>
+                    <button class="text-blue-400 hover:text-blue-300 text-sm">
+                        <i class="fas fa-search mr-1"></i>Add
+                    </button>
+                </div>
+
+                <!-- @MAP: watchlistItems.map(item => ( -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between py-2 hover:bg-gray-700 rounded px-2 cursor-pointer" data-mock="true">
+                        <div>
+                            <div class="font-mono text-sm font-medium text-white">AAPL</div>
+                            <div class="text-xs text-gray-400">Apple Inc.</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-mono text-sm text-green-400">$175.24</div>
+                            <div class="text-xs text-green-400">+2.34%</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 hover:bg-gray-700 rounded px-2 cursor-pointer" data-mock="true">
+                        <div>
+                            <div class="font-mono text-sm font-medium text-white">GOOGL</div>
+                            <div class="text-xs text-gray-400">Alphabet Inc.</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-mono text-sm text-red-400">$2,845.67</div>
+                            <div class="text-xs text-red-400">-1.23%</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 hover:bg-gray-700 rounded px-2 cursor-pointer" data-mock="true">
+                        <div>
+                            <div class="font-mono text-sm font-medium text-white">TSLA</div>
+                            <div class="text-xs text-gray-400">Tesla Inc.</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-mono text-sm text-red-400">$234.56</div>
+                            <div class="text-xs text-red-400">-3.45%</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 hover:bg-gray-700 rounded px-2 cursor-pointer" data-mock="true">
+                        <div>
+                            <div class="font-mono text-sm font-medium text-white">BTC</div>
+                            <div class="text-xs text-gray-400">Bitcoin</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-mono text-sm text-green-400">$43,567.89</div>
+                            <div class="text-xs text-green-400">+4.23%</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            <!-- Top Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="trading-card p-6 rounded-xl profit-glow">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-400">Active Trades</h3>
+                        <i class="fas fa-chart-bar text-green-400"></i>
+                    </div>
+                    <div class="font-mono text-2xl font-bold text-white" data-bind="activeTrades">12</div>
+                    <div class="text-xs text-green-400 mt-1">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +3 from yesterday
+                    </div>
+                </div>
+
+                <div class="trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-400">Success Rate</h3>
+                        <i class="fas fa-target text-blue-400"></i>
+                    </div>
+                    <div class="font-mono text-2xl font-bold text-white" data-bind="successRate">68.5%</div>
+                    <div class="text-xs text-green-400 mt-1">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +2.1% this week
+                    </div>
+                </div>
+
+                <div class="trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-400">Signals Generated</h3>
+                        <i class="fas fa-bell text-yellow-400"></i>
+                    </div>
+                    <div class="font-mono text-2xl font-bold text-white" data-bind="signalsGenerated">847</div>
+                    <div class="text-xs text-blue-400 mt-1">
+                        23 in last hour
+                    </div>
+                </div>
+
+                <div class="trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-400">Risk Score</h3>
+                        <i class="fas fa-shield-alt text-orange-400"></i>
+                    </div>
+                    <div class="font-mono text-2xl font-bold text-white" data-bind="riskScore">Medium</div>
+                    <div class="text-xs text-orange-400 mt-1">
+                        Portfolio risk level
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Chart Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- @COMPONENT: MainChart [price chart with technical indicators] -->
+                <div class="lg:col-span-2 trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl font-semibold text-white">AAPL - Apple Inc.</h2>
+                            <div class="flex items-center space-x-4 mt-1">
+                                <span class="font-mono text-lg text-green-400" data-bind="currentPrice">$175.24</span>
+                                <span class="font-mono text-sm text-green-400" data-bind="priceChange">+$4.12 (+2.34%)</span>
+                                <span class="text-xs text-gray-400" data-bind="lastUpdate">Last updated: 09:15:23</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">1D</button>
+                            <button class="px-3 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500">1W</button>
+                            <button class="px-3 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500">1M</button>
+                            <button class="px-3 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500">1Y</button>
+                        </div>
+                    </div>
+
+                    <!-- @FUNCTIONALITY: This chart should implement real-time price data visualization using Chart.js -->
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+
+                    <!-- Technical Indicators -->
+                    <div class="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-700">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-1">RSI (14)</div>
+                            <div class="font-mono text-sm text-yellow-400" data-bind="rsi">67.23</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-1">MACD</div>
+                            <div class="font-mono text-sm text-green-400" data-bind="macd">+1.24</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-1">MA (20)</div>
+                            <div class="font-mono text-sm text-white" data-bind="ma20">$171.45</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MainChart -->
+
+                <!-- Trade Execution Panel -->
+                <!-- @COMPONENT: TradePanel [buy/sell orders, position management] -->
+                <div class="trading-card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-white mb-4">Quick Trade</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Symbol</label>
+                            <input type="text" value="AAPL" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500" data-mock="true">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Quantity</label>
+                                <input type="number" value="100" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500" data-mock="true">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Order Type</label>
+                                <select class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500" data-mock="true">
+                                    <option>Market</option>
+                                    <option>Limit</option>
+                                    <option>Stop</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Price</label>
+                            <input type="number" value="175.24" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500" data-mock="true">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors" data-event="click:handleBuyOrder" data-implementation="Should validate form and execute buy order">
+                                <i class="fas fa-arrow-up mr-2"></i>Buy
+                            </button>
+                            <button class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors" data-event="click:handleSellOrder" data-implementation="Should validate form and execute sell order">
+                                <i class="fas fa-arrow-down mr-2"></i>Sell
+                            </button>
+                        </div>
+
+                        <div class="text-xs text-gray-400 text-center">
+                            Estimated Cost: <span class="font-mono text-white" data-bind="estimatedCost">$17,524.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Recent Signals -->
+                    <div class="mt-6 pt-4 border-t border-gray-700">
+                        <h4 class="text-sm font-semibold text-white mb-3">Recent Signals</h4>
+                        <!-- @MAP: recentSignals.map(signal => ( -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-2 bg-gray-700 rounded" data-mock="true">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-arrow-up text-green-400 text-xs"></i>
+                                    <span class="font-mono text-xs text-white">AAPL</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-green-400">BUY</div>
+                                    <div class="text-xs text-gray-400">2m ago</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-2 bg-gray-700 rounded" data-mock="true">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-arrow-down text-red-400 text-xs"></i>
+                                    <span class="font-mono text-xs text-white">GOOGL</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-red-400">SELL</div>
+                                    <div class="text-xs text-gray-400">5m ago</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-2 bg-gray-700 rounded" data-mock="true">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-arrow-up text-green-400 text-xs"></i>
+                                    <span class="font-mono text-xs text-white">TSLA</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-green-400">BUY</div>
+                                    <div class="text-xs text-gray-400">12m ago</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: TradePanel -->
+            </div>
+
+            <!-- Positions and Orders -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Active Positions -->
+                <!-- @COMPONENT: PositionsTable [current holdings, P&L, actions] -->
+                <div class="trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Active Positions</h3>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm">
+                            <i class="fas fa-external-link-alt mr-1"></i>View All
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- @MAP: activePositions.map(position => ( -->
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold text-white">A</span>
+                                </div>
+                                <div>
+                                    <div class="font-mono text-sm font-medium text-white">AAPL</div>
+                                    <div class="text-xs text-gray-400">100 shares</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-mono text-sm text-green-400">+$412.50</div>
+                                <div class="text-xs text-green-400">+2.35%</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-red-400 hover:text-red-300 text-xs">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold text-white">G</span>
+                                </div>
+                                <div>
+                                    <div class="font-mono text-sm font-medium text-white">GOOGL</div>
+                                    <div class="text-xs text-gray-400">25 shares</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-mono text-sm text-red-400">-$156.25</div>
+                                <div class="text-xs text-red-400">-2.19%</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-red-400 hover:text-red-300 text-xs">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold text-white">T</span>
+                                </div>
+                                <div>
+                                    <div class="font-mono text-sm font-medium text-white">TSLA</div>
+                                    <div class="text-xs text-gray-400">50 shares</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-mono text-sm text-green-400">+$789.50</div>
+                                <div class="text-xs text-green-400">+6.74%</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-red-400 hover:text-red-300 text-xs">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PositionsTable -->
+
+                <!-- Recent Orders -->
+                <!-- @COMPONENT: OrdersTable [order history, status, details] -->
+                <div class="trading-card p-6 rounded-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Recent Orders</h3>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm">
+                            <i class="fas fa-history mr-1"></i>View All
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- @MAP: recentOrders.map(order => ( -->
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-mono text-sm font-medium text-white">AAPL</span>
+                                        <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">BUY</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">100 @ $174.52 - Filled</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">09:12:34</div>
+                                <div class="font-mono text-xs text-green-400">Completed</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-mono text-sm font-medium text-white">GOOGL</span>
+                                        <span class="text-xs bg-red-600 text-white px-2 py-1 rounded">SELL</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">25 @ $2,850.00 - Pending</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">09:14:21</div>
+                                <div class="font-mono text-xs text-yellow-400">Pending</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="font-mono text-sm font-medium text-white">MSFT</span>
+                                        <span class="text-xs bg-green-600 text-white px-2 py-1 rounded">BUY</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">75 @ $378.45 - Filled</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">08:45:12</div>
+                                <div class="font-mono text-xs text-green-400">Completed</div>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: OrdersTable -->
+            </div>
+
+            <!-- Performance Analytics -->
+            <!-- @COMPONENT: PerformanceCharts [P&L over time, strategy comparison] -->
+            <div class="trading-card p-6 rounded-xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-white">Performance Analytics</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">7D</button>
+                        <button class="px-3 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500">30D</button>
+                        <button class="px-3 py-1 text-xs bg-gray-600 text-gray-300 rounded hover:bg-gray-500">90D</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- P&L Chart -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-400 mb-3">Portfolio P&L Over Time</h4>
+                        <div class="h-64">
+                            <canvas id="plChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Strategy Performance -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-400 mb-3">Strategy Performance</h4>
+                        <div class="h-64">
+                            <canvas id="strategyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-700">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Sharpe Ratio</div>
+                        <div class="font-mono text-lg font-semibold text-white" data-bind="sharpeRatio">1.84</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Max Drawdown</div>
+                        <div class="font-mono text-lg font-semibold text-red-400" data-bind="maxDrawdown">-8.45%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Alpha</div>
+                        <div class="font-mono text-lg font-semibold text-green-400" data-bind="alpha">0.12</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-400 mb-1">Beta</div>
+                        <div class="font-mono text-lg font-semibold text-white" data-bind="beta">0.95</div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: PerformanceCharts -->
+        </main>
+    </div>
+
+    <!-- @FUNCTIONALITY: Real-time updates, chart data processing, and trade execution logic -->
+    <script>
+        (function() {
+            // TODO: Implement real-time WebSocket connections for market data
+            // TODO: Integrate with trading APIs for order execution
+            // TODO: Implement strategy backtesting logic
+            
+            // Mock data for charts
+            const priceChartData = {
+                labels: Array.from({length: 50}, (_, i) => {
+                    const date = new Date();
+                    date.setMinutes(date.getMinutes() - (49 - i));
+                    return date.toLocaleTimeString();
+                }),
+                datasets: [{
+                    label: 'AAPL Price',
+                    data: Array.from({length: 50}, () => 170 + Math.random() * 10),
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+
+            // Initialize Price Chart
+            const priceCtx = document.getElementById('priceChart');
+            if (priceCtx) {
+                new Chart(priceCtx, {
+                    type: 'line',
+                    data: priceChartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                ticks: {
+                                    color: '#9CA3AF',
+                                    maxTicksLimit: 8
+                                },
+                                grid: {
+                                    color: '#374151'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                ticks: {
+                                    color: '#9CA3AF'
+                                },
+                                grid: {
+                                    color: '#374151'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false
+                        }
+                    }
+                });
+            }
+
+            // P&L Chart
+            const plChartData = {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'P&L',
+                    data: [1200, -800, 2400, 1600, -400, 3200, 2800],
+                    backgroundColor: function(ctx) {
+                        return ctx.parsed.y >= 0 ? '#22C55E' : '#EF4444';
+                    },
+                    borderColor: '#3B82F6',
+                    borderWidth: 1
+                }]
+            };
+
+            const plCtx = document.getElementById('plChart');
+            if (plCtx) {
+                new Chart(plCtx, {
+                    type: 'bar',
+                    data: plChartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#9CA3AF'
+                                },
+                                grid: {
+                                    color: '#374151'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#9CA3AF'
+                                },
+                                grid: {
+                                    color: '#374151'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Strategy Performance Chart
+            const strategyChartData = {
+                labels: ['Trend Following', 'Mean Reversion', 'Arbitrage', 'Market Timing'],
+                datasets: [{
+                    label: 'Returns %',
+                    data: [7.2, -1.8, 3.4, 5.1],
+                    backgroundColor: ['#22C55E', '#EF4444', '#22C55E', '#22C55E'],
+                    borderWidth: 0
+                }]
+            };
+
+            const strategyCtx = document.getElementById('strategyChart');
+            if (strategyCtx) {
+                new Chart(strategyCtx, {
+                    type: 'doughnut',
+                    data: strategyChartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#9CA3AF',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Simulate real-time updates
+            function simulateRealTimeUpdates() {
+                // TODO: Replace with actual WebSocket implementation
+                setInterval(() => {
+                    // Update random price values (mock implementation)
+                    const priceElements = document.querySelectorAll('[data-bind*="price"]');
+                    priceElements.forEach(el => {
+                        if (el.textContent.includes('$')) {
+                            const currentPrice = parseFloat(el.textContent.replace(/[$,]/g, ''));
+                            const change = (Math.random() - 0.5) * 2;
+                            const newPrice = Math.max(0, currentPrice + change);
+                            el.textContent = '$' + newPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            
+                            // Add visual feedback for price changes
+                            el.classList.remove('text-green-400', 'text-red-400');
+                            el.classList.add(change >= 0 ? 'text-green-400' : 'text-red-400');
+                        }
+                    });
+                }, 5000);
+            }
+
+            // Initialize real-time updates
+            simulateRealTimeUpdates();
+
+            // Initialize interactive elements
+            document.querySelectorAll('button[data-event]').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const event = this.getAttribute('data-event');
+                    const implementation = this.getAttribute('data-implementation');
+                    console.log(`Event: ${event}`);
+                    console.log(`Implementation needed: ${implementation}`);
+                    
+                    // TODO: Implement actual event handlers
+                    if (event.includes('Buy') || event.includes('Sell')) {
+                        // Show mock confirmation
+                        alert('Order submitted! (Mock implementation - integrate with trading API)');
+                    }
+                });
+            });
+
+        })();
+    </script>
+</body>
+</html>
